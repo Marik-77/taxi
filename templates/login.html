@@ -1,0 +1,18 @@
+{% extends 'index.html' %}
+
+{% block content %}
+<head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='order.css') }}">
+    <meta charset="UTF-8">
+    <title>Вход</title>
+</head>
+<body>
+    <h1>Вход</h1>
+    <form method="POST">
+        <input type="email" name="email" placeholder="Электронная почта" required>
+        <input type="password" name="password" placeholder="Пароль" required>
+        <button type="submit">Войти</button>
+    </form>
+    <a href="{{ url_for('register') }}">Нет аккаунта? Регистрация</a>
+</body>
+{% endblock %}

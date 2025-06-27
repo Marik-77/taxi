@@ -1,0 +1,185 @@
+{% extends 'index.html' %}
+
+{% block content %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Заказ такси</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='order.css') }}">
+    <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU&amp;apikey=02ab25f7-ec86-4d61-812d-60c434c75b94" type="text/javascript"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Заказ такси</h1>
+        <div id="map" style="width: 100%; height: 400px;"></div><br/>
+        <form method="POST">
+            <label for="start">Начальная точка:</label>
+            <input type="text" id="start" name="start" placeholder="Введите начальную точку" required>
+            <button onclick="setAddress('start')">Выбрать адрес на карте</button><br/><br/>
+            <label for="end">Конечная точка:</label>
+            <input type="text" id="end" name="end" placeholder="Введите конечную точку" required>
+            <button onclick="setAddress('end')">Выбрать адрес на карте</button><br/><br/>
+        
+            <label for="tariff">Выберите тариф:</label>
+            <select id="tariff">
+                <option value="econom">Эконом</option>
+                <option value="comfort">Комфорт</option>
+                <option value="comfort_plus">Комфорт +</option>
+                <option value="elite">Элит</option>
+            </select><br/><br/>
+
+            <button type="submit" onclick="orderTaxi">Заказать такси</button>
+        </form>
+        
+    </div>
+
+    <script>
+        ymaps.ready(init);
+        var myMap, myPlacemarkStart, myPlacemarkEnd, currentInputId, currentRoute;
+
+        function init() {
+            myMap = new ymaps.Map("map", {
+                center: [55.751574, 37.573856],
+                zoom: 10
+            });
+
+            myPlacemarkStart = new ymaps.Placemark(myMap.getCenter(), {
+                hintContent: 'Начальная точка'
+            }, {
+                preset: 'islands#violetIcon'
+            });
+
+            myPlacemarkEnd = new ymaps.Placemark(myMap.getCenter(), {
+                hintContent: 'Конечная точка'
+            }, {
+                preset: 'islands#redIcon'
+            });
+
+            myMap.geoObjects.add(myPlacemarkStart);
+            myMap.geoObjects.add(myPlacemarkEnd);
+
+            myMap.events.add('click', function (e) {
+                var coords = e.get('coords');
+                if (currentInputId === 'start') {
+                    myPlacemarkStart.geometry.setCoordinates(coords);
+                    getAddress(coords, 'start');
+                } else if (currentInputId === 'end') {
+                    myPlacemarkEnd.geometry.setCoordinates(coords);
+                    getAddress(coords, 'end');
+                }
+            });
+        }
+
+        function setAddress(inputId) {
+            currentInputId = inputId;
+            alert(`Кликните на карте, чтобы установить адрес для ${inputId === 'start' ? 'начальной' : 'конечной'} точки.`);
+        }
+
+        function getAddress(coords, inputId) {
+            ymaps.geocode(coords).then(function (res) {
+                var firstGeoObject = res.geoObjects.get(0);
+                if (firstGeoObject) {
+                    var address = firstGeoObject.getAddressLine();
+                    if (inputId === 'start') {
+                        document.getElementById('start').value = address;
+                    } else {
+                        document.getElementById('end').value = address;
+                    }
+                    buildRoute();
+                } else {
+                    alert('Адрес не найден');
+                }
+            }).catch(function (error) {
+                console.log('Ошибка получения адреса: ', error);
+            });
+        }
+
+        function buildRoute() {
+            var start = document.getElementById('start').value;
+            var end = document.getElementById('end').value;
+
+            if (start && end) {
+                ymaps.route([start, end]).then(function (route) {
+                    if (currentRoute) {
+                        myMap.geoObjects.remove(currentRoute); // Удаляем предыдущий маршрут
+                    }
+                    currentRoute = route; // Сохраняем текущий маршрут
+                    myMap.geoObjects.add(route); // Добавляем маршрут на карту
+                    myMap.setBounds(route.getBounds(), { checkZoomRange: true, zoomMargin: 20 });
+                    myMap.geoObjects.add(myPlacemarkStart);
+                    myMap.geoObjects.add(myPlacemarkEnd);
+                }).catch(function (error) {
+                    alert('Ошибка построения маршрута: ' + error.message);
+                });
+            }
+        }
+
+        function orderTaxi() {
+            var start = document.getElementById('start').value;
+            var end = document.getElementById('end').value;
+            var tariff = document.getElementById('tariff').value;
+
+            if (start && end) {
+                // Расчет расстояния и времени с использованием Яндекс.Карт
+                ymaps.route([start, end]).then(function(route) {
+                    var distance = route.getHumanLength();
+                    var distanceValue = parseFloat(distance.replace(",", ".").match(/\d+(\.\d+)?/g)[0]);
+                    var price = distanceValue * 20;
+
+                    // Определяем коэффициент в зависимости от тарифа
+                    var tariffMultiplier = {
+                        "econom": 1,
+                        "comfort": 2,
+                        "comfort_plus": 4,
+                        "elite": 8
+                    };
+
+                    var finalPrice = price * tariffMultiplier[tariff];
+
+                    // Генерация информации о водителе
+                    var driverName = generateRandomDriverName();
+                    var carNumber = generateRandomCarNumber();
+                    var driverRating = (Math.random() * 4 + 1).toFixed(1); // Рейтинг от 1 до 5 с одним десятичным знаком
+                    var waitingTime = Math.floor(Math.random() * 10) + 1; // Случайное время ожидания от 1 до 10 минут
+
+                    alert(`Такси заказано от ${start} до ${end} с тарифом "${tariff}"\n` +
+                          `Имя водителя: ${driverName}\n` +
+                          `Номер машины: ${carNumber}\n` +
+                          `Цена: ${finalPrice.toFixed(2)}\n` +
+                          `Расстояние: ${distanceValue} км\n` +
+                          `Время подачи: ${waitingTime} минут\n` +
+                          `Рейтинг водителя: ${driverRating}/5`);
+
+                    // Очистка полей ввода
+                    document.getElementById('start').value = '';
+                    document.getElementById('end').value = '';
+                    document.getElementById('tariff').selectedIndex = 0; // Сброс тарифа
+                    // Удаление маршрута с карты
+                    if (currentRoute) {
+                        myMap.geoObjects.remove(currentRoute);
+                        currentRoute = null;
+                    }
+
+                }).catch(function(error) {
+                    alert('Ошибка при получении маршрута: ' + error.message);
+                });
+            } else {
+                alert('Пожалуйста, укажите обе точки.');
+            }
+        }
+
+        // Функция для генерации случайного имени водителя
+        function generateRandomDriverName() {
+            const names = ["Иван", "Петр", "Сергей", "Алексей", "Дмитрий", "Николай", "Анна", "Екатерина", "Мария", "Ольга"];
+            const surnames = ["Иванов", "Петров", "Сидоров", "Смирнов", "Кузнецов", "Фёдоров", "Селезнев", "Романов", "Степанов", "Захаров"];
+            return `${names[Math.floor(Math.random() * names.length)]} ${surnames[Math.floor(Math.random() * surnames.length)]}`;
+        }
+
+        // Функция для генерации номера машины ВЗЯТЬ ИЗ СТАРОГО ПРОЕКТА
+        function generateRandomCarNumber() {
+            const letters = 'АВЕКМНОРСТXY';
+            return `A${Math.floor(Math.random() * 10)}${letters[Math.floor(Math.random() * letters.length)]}${Math.floor(Math.random() * 1000)}${letters[Math.floor(Math.random() * letters.length)]}`;
+        }
+    </script>
+</body>
+{% endblock %}

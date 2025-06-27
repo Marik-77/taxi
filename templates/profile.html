@@ -1,0 +1,25 @@
+{% extends 'index.html' %}
+
+{% block content %}
+    <h1>Добро пожаловать, {{ user.surname }} {{ user.name }}!</h1>
+    <form method="POST">
+        <label for="start">Почта:</label>
+        <input type="text" name="email" placeholder="Почта" value="{{ user.email }}" required><br>
+
+        <label for="start">Пароль:</label>
+        <input type="text" name="password" placeholder="Пароль" required><br>
+
+        <label for="start">Имя:</label>
+        <input type="text" name="name" placeholder="Имя" value="{{ user.name }}" required><br>
+
+        <label for="start">Фамилия:</label>
+        <input type="text" name="surname" placeholder="Фамилия" value="{{ user.surname }}" required><br>
+
+        <label for="start">Телефон:</label>
+        <input type="text" name="number" placeholder="Телефон" value="{{ user.number }}" required><br>
+        <button type="submit">Сохранить изменения</button>
+    </form>
+    <a href="{{ url_for('logout') }}" style="background-color: red;">Выйти из профиля</a>
+
+
+{% endblock %}

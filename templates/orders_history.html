@@ -1,0 +1,22 @@
+{% extends 'index.html' %}
+
+{% block content %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='order.css') }}">
+    <h2>Ваша история заказов</h2>
+    {% if orders %}
+        <ul>
+            {% for order in orders %}
+                <li>
+                    <strong>Начальная точка:</strong> {{ order.start }}<br>
+                    <strong>Конечная точка:</strong> {{ order.end }}<br>
+                    <strong>Driver Name:</strong> {{ order.driver_name }}<br>
+                    <strong>Car Number:</strong> {{ order.car_number }}<br>
+                    <strong>Driver Rating:</strong> {{ order.driver_rating }}<br>
+                    <strong>Date:</strong> {{ order.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}<br>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Вы не сделали ни одного заказа.</p>
+    {% endif %}
+{% endblock %}

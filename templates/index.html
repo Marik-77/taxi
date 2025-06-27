@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Повезёт? Повезёт!</title>
+</head>
+<body>
+    <header>
+        <h1>Повезёт? Повезёт!</h1>
+        <nav class="navi">
+            <ul>
+                <li class="keponsive"><a href="{{ url_for('index') }}">Главная</a></li>
+                <li class="keponsive"><a href="{{ url_for('order') }}">Создать заказ</a></li>
+                <li class="keponsive"><a href="{{ url_for('orders_history') }}">История заказов</a></li>
+                <li class="keponsive"><a href="{{ url_for('profile') }}">Профиль</a></li>
+            </ul>
+            
+        </nav>
+    </header>
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>
